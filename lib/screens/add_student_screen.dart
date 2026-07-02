@@ -16,8 +16,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final phoneController = TextEditingController();
-  final courseController = TextEditingController();
-  final yearController = TextEditingController();
+  final StudentService _studentService = StudentService();
 
   final List<String> _courses = [
     'Computer Science',
@@ -37,20 +36,11 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
   String _selectedYear = '1st Year';
 
   @override
-  void initState() {
-    super.initState();
-    courseController.text = _selectedCourse;
-    yearController.text = _selectedYear;
-  }
-
-  @override
   void dispose() {
     regController.dispose();
     nameController.dispose();
     emailController.dispose();
     phoneController.dispose();
-    courseController.dispose();
-    yearController.dispose();
     super.dispose();
   }
 
@@ -59,24 +49,32 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
       return;
     }
 
-    final student = Student(
-      regNo: regController.text.trim(),
-      name: nameController.text.trim(),
-      email: emailController.text.trim(),
-      phone: phoneController.text.trim(),
-      course: _selectedCourse,
-      year: _selectedYear,
-    );
+    try {
+      final student = Student(
+        regNo: regController.text.trim(),
+        name: nameController.text.trim(),
+        email: emailController.text.trim(),
+        phone: phoneController.text.trim(),
+        course: _selectedCourse,
+        year: _selectedYear,
+      );
 
-    await StudentService().insertStudent(student);
+      await _studentService.insertStudent(student);
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Student added successfully')),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Student added successfully')),
+      );
 
-    Navigator.pop(context);
+      Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error adding student: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -135,7 +133,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
               ),
               const SizedBox(height: 14),
               DropdownButtonFormField<String>(
-                initialValue: _selectedCourse,
+                value: _selectedCourse,
                 decoration: const InputDecoration(
                   labelText: 'Course',
                   prefixIcon: Icon(Icons.book),
@@ -153,7 +151,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
               ),
               const SizedBox(height: 14),
               DropdownButtonFormField<String>(
-                initialValue: _selectedYear,
+                value: _selectedYear,
                 decoration: const InputDecoration(
                   labelText: 'Year',
                   prefixIcon: Icon(Icons.calendar_today),

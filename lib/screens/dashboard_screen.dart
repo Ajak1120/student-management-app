@@ -11,6 +11,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _studentCount = 0;
+  final StudentService _studentService = StudentService();
 
   @override
   void initState() {
@@ -19,11 +20,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _refreshSummary() async {
-    final students = await StudentService().getStudents();
-    if (mounted) {
-      setState(() {
-        _studentCount = students.length;
-      });
+    try {
+      final count = await _studentService.getStudentCount();
+      if (mounted) {
+        setState(() {
+          _studentCount = count;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading student count: $e')),
+        );
+      }
     }
   }
 
@@ -105,13 +114,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 icon: Icons.person_add,
                 title: 'Add Student',
                 subtitle: 'Register a new student record',
-                onTap: () => Navigator.pushNamed(context, '/addStudent'),
+                onTap: () => Navigator.pushNamed(context, '/addStudent').then((_) => _refreshSummary()),
               ),
               _buildMenuCard(
                 icon: Icons.list,
                 title: 'View Students',
                 subtitle: 'See all saved student records',
-                onTap: () => Navigator.pushNamed(context, '/students'),
+                onTap: () => Navigator.pushNamed(context, '/students').then((_) => _refreshSummary()),
               ),
               const SizedBox(height: 12),
               ElevatedButton.icon(

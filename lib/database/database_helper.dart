@@ -22,8 +22,9 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -39,6 +40,20 @@ class DatabaseHelper {
         year TEXT NOT NULL
       )
     ''');
+
+    // Create indexes for frequently queried fields
+    await db.execute('CREATE INDEX idx_students_regNo ON students(regNo)');
+    await db.execute('CREATE INDEX idx_students_name ON students(name)');
+    await db.execute('CREATE INDEX idx_students_course ON students(course)');
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Create indexes if upgrading from v1
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_students_regNo ON students(regNo)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_students_name ON students(name)');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_students_course ON students(course)');
+    }
   }
 
   Future<void> close() async {
